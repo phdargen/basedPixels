@@ -8,7 +8,7 @@ export function getConfig() {
     chains: [baseSepolia, base],
     connectors: [
       coinbaseWallet({
-        appName: "My Sub Account Demo",
+        appName: "BasedPixels",
         preference: {
           keysUrl: "https://keys-dev.coinbase.com/connect",
           options: "smartWalletOnly",
