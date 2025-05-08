@@ -25,6 +25,7 @@ export default function RootLayout(props: { children: ReactNode }) {
     <html lang="en">
       <head>
         <link rel="icon" href="/basedPixels.png" />
+        <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap" rel="stylesheet" />
       </head>
       <body className={inter.className}>
         <Providers initialState={initialState}>

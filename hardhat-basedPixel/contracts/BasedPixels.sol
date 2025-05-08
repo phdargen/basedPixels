@@ -5,11 +5,11 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract BasedPixels is ERC721 {
-    uint8  public constant SIDE = 10;                 // 10 × 10 grid
+    uint8  public constant SIDE = 10; // 10 × 10 grid
     uint256 public constant MINT_PRICE   = 0 ether;
     uint256 public constant PIXEL_PRICE  = 0 ether;  
 
-    mapping(uint256 => uint128) private _grid;        // 100 bits → black pixels
+    mapping(uint256 => uint128) private _grid;        
     uint256 private _id;
 
     constructor() ERC721("BasedPixels", "BPX") {}
@@ -21,7 +21,7 @@ contract BasedPixels is ERC721 {
         _safeMint(msg.sender, tokenId);
     }
 
-    /* ---------- paint a pixel black ---------- */
+    /* ---------- paint a pixel with Based icon ---------- */
     function paint(uint256 tokenId, uint8 x, uint8 y) external payable {
         require(ownerOf(tokenId) == msg.sender, "not owner");
         require(x < SIDE && y < SIDE, "oob");
@@ -31,28 +31,50 @@ contract BasedPixels is ERC721 {
         uint128 mask = uint128(1) << bit;
         
         // Toggle the pixel state
-        if (_grid[tokenId] & mask == 0) { // If pixel is white (0), paint it black (1)
+        if (_grid[tokenId] & mask == 0) { // If empty, add Based icon
             _grid[tokenId] |= mask;
-        } else { // If pixel is black (1), paint it white (0)
+        } else { // If Based icon exists, remove it
             _grid[tokenId] &= ~mask;
         }
     }
 
+    /* ---------- helper function to count Based icons ---------- */
+    function _countBasedIcons(uint128 data) internal pure returns (uint256) {
+        uint256 count = 0;
+        for (uint8 i = 0; i < 100; ++i) {
+            if (data & (uint128(1) << i) != 0) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /* ---------- fully on‑chain metadata + SVG ---------- */
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        string memory svgImage = _svg(_grid[tokenId]);
+        uint128 gridData = _grid[tokenId];
+        string memory svgImage = _svg(gridData);
+        uint256 basedIconCount = _countBasedIcons(gridData);
 
         string memory namePart = string.concat('BasedPixels #', Strings.toString(tokenId));
-        string memory descriptionPart = "Customizable 10x10 onchain canvas where each pixel can be toggled between blank space and the iconic Base logo.";
+        string memory descriptionPart = "Dynamic onchain canvas where each pixel can be toggled between blank space and the iconic Base logo.";
 
         // Build the image data URI (raw SVG)
         string memory imageValue = string.concat("data:image/svg+xml;utf8,", svgImage);
+
+        // Build the attributes JSON
+        string memory attributesPart = string.concat(
+            ',"attributes":[{"trait_type":"Based Icons","value":"',
+            Strings.toString(basedIconCount),
+            '"}]'
+        );
 
         // Build the JSON content using abi.encodePacked
         bytes memory jsonBytes = abi.encodePacked(
             '{"name":"', namePart, '",',
             '"description":"', descriptionPart, '",',
-            '"image":"', imageValue, '"}'
+            '"image":"', imageValue, '"',
+            attributesPart,
+            '}'
         );
 
         // Final data URI for the JSON

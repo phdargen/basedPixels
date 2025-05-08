@@ -51,7 +51,7 @@ const basedPixelsAbi = [
   }
 ];
 
-const contractAddress = "0x350806561E8cdaF145723e072fdE7268150265cb"; 
+const contractAddress = "0x036193094D39Aa6B14Cd0d4cdF3a494A3FAAD317"; 
 
 // Canvas component to display and interact with the pixels
 function PixelCanvas({ tokenId, onPaintTransaction }: { tokenId: string, onPaintTransaction: (hash: string) => void }) {
@@ -89,7 +89,7 @@ function PixelCanvas({ tokenId, onPaintTransaction }: { tokenId: string, onPaint
   return (
     <div style={{ marginTop: '20px' }}>
       <h3>Your BasedPixels Canvas (ID: {tokenId})</h3>
-      <p>Click on any pixel to toggle the iconic Base logo</p>
+      <p>Click on any pixel to toggle the iconic Base logo with an onchain transaction. </p>
       
       <div style={{ 
         display: 'grid',
@@ -206,7 +206,7 @@ function App() {
       <Card>
         <div>
           <h2>BasedPixels NFT</h2>
-          <p>Mint a 10x10 customizable pixel canvas NFT.</p>
+          <p>Mint a dynamic 10x10 pixel canvas NFT, fully onchain.</p>
 
           <div style={{ display: 'flex', gap: '10px' }}>
             {account.status === 'connected' ? (
@@ -238,7 +238,7 @@ function App() {
               as="a"
               href={mintedTokenId 
                 ? `https://testnets.opensea.io/assets/base_sepolia/${contractAddress}/${mintedTokenId}`
-                : 'https://testnets.opensea.io/collection/basedpixels'}
+                : 'https://testnets.opensea.io/collection/basedpixels-1'}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -262,7 +262,7 @@ function App() {
       )}
 
       {/* Transaction History Card */}
-      {transactions.length > 0 && (
+      {mintedTokenId && transactions.length > 0 && (
         <Card>
           <div>
             <h2>Transaction History</h2>
