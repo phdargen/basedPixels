@@ -7,6 +7,7 @@ import { cookieToInitialState } from 'wagmi'
 
 import { getConfig } from '../wagmi'
 import { Providers } from './providers'
+import StyledComponentsRegistry from '../lib/StyledComponentsRegistry'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,8 +23,13 @@ export default function RootLayout(props: { children: ReactNode }) {
   )
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/basedPixels.png" />
+      </head>
       <body className={inter.className}>
-        <Providers initialState={initialState}>{props.children}</Providers>
+        <Providers initialState={initialState}>
+          <StyledComponentsRegistry>{props.children}</StyledComponentsRegistry>
+        </Providers>
       </body>
     </html>
   )

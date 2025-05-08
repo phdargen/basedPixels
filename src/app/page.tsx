@@ -2,7 +2,7 @@
  
 import { parseEther, encodeFunctionData } from 'viem'
 import { useAccount, useConnect, useDisconnect, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi'
-import { PageContainer, Title, Card, Button, AccountInfo, ConnectContainer } from './StyledComponents';
+import { PageContainer, Title, Card, Button, LoadingSpinner, LoadingContainer } from './StyledComponents';
 import { useState, useEffect } from 'react';
 
 // Transaction type definition
@@ -56,7 +56,7 @@ const contractAddress = "0x350806561E8cdaF145723e072fdE7268150265cb";
 // Canvas component to display and interact with the pixels
 function PixelCanvas({ tokenId, onPaintTransaction }: { tokenId: string, onPaintTransaction: (hash: string) => void }) {
   const [pixelStates, setPixelStates] = useState(Array(100).fill(false));
-  const { sendTransaction, sendTransactionAsync, isPending } = useSendTransaction();
+  const { sendTransaction, isPending } = useSendTransaction();
   
   const handlePaint = (x: number, y: number) => {
     if (!tokenId || isPending) return;
@@ -88,8 +88,8 @@ function PixelCanvas({ tokenId, onPaintTransaction }: { tokenId: string, onPaint
   
   return (
     <div style={{ marginTop: '20px' }}>
-      <h3>Your BasedPixel Canvas (ID: {tokenId})</h3>
-      <p>Click on any pixel to toggle between white and the Base logo</p>
+      <h3>Your BasedPixels Canvas (ID: {tokenId})</h3>
+      <p>Click on any pixel to toggle the iconic Base logo</p>
       
       <div style={{ 
         display: 'grid',
@@ -130,7 +130,12 @@ function PixelCanvas({ tokenId, onPaintTransaction }: { tokenId: string, onPaint
           );
         })}
       </div>
-      {isPending && <div style={{ marginTop: '10px', textAlign: 'center' }}>Painting pixel...</div>}
+      {isPending && (
+        <LoadingContainer>
+          <LoadingSpinner />
+          <div>Painting pixel...</div>
+        </LoadingContainer>
+      )}
     </div>
   );
 }
@@ -139,7 +144,7 @@ function App() {
   const account = useAccount()
   const { connectors, connect, status, error } = useConnect()
   const { disconnect } = useDisconnect()
-  const { sendTransaction, sendTransactionAsync, isPending: isSending, isSuccess: isSent, data: hash } = useSendTransaction()
+  const { sendTransactionAsync, isPending: isSending, isSuccess: isSent, data: hash } = useSendTransaction()
   const { isLoading: isWaiting, isSuccess: isConfirmed, data: receipt } = useWaitForTransactionReceipt({
     hash
   })
@@ -181,7 +186,7 @@ function App() {
     const tx = await sendTransactionAsync({
       to: contractAddress,
       value: parseEther('0'),
-      data: data // This is the function selector for mint()
+      data: data 
     });
     console.log(tx);
   }
@@ -192,116 +197,100 @@ function App() {
   
   return (
     <PageContainer>
-      <Title>BasedPixels</Title>
-      <Card>
-        <AccountInfo>
-          <h2>Account</h2>
-          <div>
-            Status: {account.status}
-            <br />
-            Account: {JSON.stringify(account.addresses?.[0])}
-            <br />
-            Sub Account: {JSON.stringify(account.addresses?.[1])}
-            <br />
-            Chain ID: {account.chainId}
-          </div>
-          {account.status === 'connected' ? (
-            <Button type="button" onClick={() => disconnect()}>
-              Disconnect
-            </Button>
-          ) : (
-            connectors
-              .filter((connector) => connector.name === 'Coinbase Wallet')
-              .map((connector) => (
-                <Button
-                  key={connector.uid}
-                  onClick={() => connect({ connector })}
-                  type="button"
-                >
-                  Sign in with Smart Wallet
-                </Button>
-              ))
-          )}
-        </AccountInfo>
-      </Card>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <img src="/basedPixels.png" alt="BasedPixels Logo" style={{ marginRight: '10px', height: '40px' }} />
+        <Title>BasedPixels</Title>
+        <img src="/basedPixels.png" alt="BasedPixels Logo" style={{ marginLeft: '10px', height: '40px' }} />
+      </div>
       
       <Card>
         <div>
-          <h2>Mint BasedPixel NFT</h2>
+          <h2>BasedPixels NFT</h2>
           <p>Mint a 10x10 customizable pixel canvas NFT.</p>
-          
-          <Button 
-            type="button" 
-            onClick={handleMint}
-            disabled={account.status !== 'connected' || isSending || isWaiting}
-          >
-            {isSending ? 'Submitting...' : isWaiting ? 'Confirming...' : 'Mint NFT'}
-          </Button>
-          
-          {(isSent || isConfirmed) && (
-            <div style={{ marginTop: '10px', color: 'green' }}>
-              {isWaiting ? 'Transaction submitted, waiting for confirmation...' : 'Successfully minted your BasedPixel NFT!'}
-              {hash && (
-                <div style={{ fontSize: '0.9em', marginTop: '5px', wordBreak: 'break-all' }}>
-                  TX Hash: {hash}
-                </div>
-              )}
-            </div>
-          )}
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {account.status === 'connected' ? (
+              <Button type="button" onClick={() => disconnect()}>
+                Sign out
+              </Button>
+            ) : (
+              connectors
+                .filter((connector) => connector.name === 'Coinbase Wallet')
+                .map((connector) => (
+                  <Button
+                    key={connector.uid}
+                    onClick={() => connect({ connector })}
+                    type="button"
+                  >
+                    Sign in
+                  </Button>
+                ))
+            )}
+            
+            <Button 
+              onClick={handleMint}
+              disabled={account.status !== 'connected' || isSending || isWaiting || mintedTokenId !== null}
+            >
+              {isSending ? 'Minting...' : isWaiting ? 'Confirming...' : mintedTokenId ? 'Minted!' : 'Mint NFT'}
+            </Button>
+
+            <Button
+              as="a"
+              href={mintedTokenId 
+                ? `https://testnets.opensea.io/assets/base_sepolia/${contractAddress}/${mintedTokenId}`
+                : 'https://testnets.opensea.io/collection/basedpixels'}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View on OpenSea
+            </Button>
+          </div>
           
           {error && (
             <div style={{ marginTop: '10px', color: 'red' }}>
               Error: {error.message || 'Failed to mint NFT'}
             </div>
           )}
-          
-          {!account.status || account.status !== 'connected' ? (
-            <div style={{ marginTop: '10px' }}>
-              Connect your wallet to mint an NFT
-            </div>
-          ) : null}
-          
-          {mintedTokenId && (
-            <PixelCanvas tokenId={mintedTokenId} onPaintTransaction={handlePaintTransaction} />
-          )}
         </div>
       </Card>
 
+      {/* Canvas Card */}
+      {mintedTokenId && (
+        <Card>
+          <PixelCanvas tokenId={mintedTokenId} onPaintTransaction={handlePaintTransaction} />
+        </Card>
+      )}
+
       {/* Transaction History Card */}
-      <Card>
-        <div>
-          <h2>Transaction History</h2>
-          <div style={{ 
-            maxHeight: '300px', 
-            overflowY: 'auto', 
-            padding: '10px', 
-            backgroundColor: '#1a1a1a', 
-            borderRadius: '4px' 
-          }}>
-            {transactions.length === 0 ? (
-              <p>No transactions yet</p>
-            ) : (
-              transactions.map((tx, index) => (
+      {transactions.length > 0 && (
+        <Card>
+          <div>
+            <h2>Transaction History</h2>
+            <div style={{ 
+              maxHeight: '300px', 
+              overflowY: 'auto'
+            }}>
+              {transactions.map((tx, index) => (
                 <div key={index} style={{ marginBottom: '8px', lineHeight: '1.4' }}>
                   <span>{tx.type}: </span>
-                  <a 
-                    href={`https://sepolia.basescan.org/tx/${tx.hash}`} 
-                    target="_blank" 
+                  <a
+                    href={`https://sepolia.basescan.org/tx/${tx.hash}`}
+                    target="_blank"
                     rel="noopener noreferrer"
-                    style={{ 
-                      color: '#0052FF', 
-                      textDecoration: 'underline', 
-                      wordBreak: 'break-all' 
+                    style={{
+                      color: 'white',
+                      textDecoration: 'none',
+                      wordBreak: 'break-all'
                     }}
                   >
-                    {tx.hash}
+                    {`${tx.hash.slice(0, 6)}...${tx.hash.slice(-6)}`}
                   </a>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
     </PageContainer>
   )
 }
